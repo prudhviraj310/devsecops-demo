@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SONAR_TOKEN = credentials('sqp_17cb931388a45e307ed0fa0a8af99744bee68665') // Jenkins credential ID for SonarQube token
+        SONAR_TOKEN = credentials('sqp_17cb931388a45e307ed0fa0a8af99744bee68665') // Jenkins credential ID
         SONAR_HOST_URL = 'http://localhost:9000'
         DOCKERHUB_USER = 'prudhviraj310'
         IMAGE_NAME = 'devsecops-demo'
@@ -27,7 +27,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('MySonar') {
+                withSonarQubeEnv('MySonar') { // Match Jenkins > Configure System > SonarQube name
                     sh """
                         npx sonar-scanner \
                         -Dsonar.projectKey=devsecops-demo \
@@ -73,8 +73,10 @@ pipeline {
 
     post {
         always {
-            echo "🧹 Cleaning up Docker session..."
-            sh 'docker logout'
+            node {
+                echo "🧹 Cleaning up Docker session..."
+                sh 'docker logout'
+            }
         }
     }
 }
