@@ -29,11 +29,11 @@ pipeline {
             steps {
                 withSonarQubeEnv('MySonar') { // This must match Jenkins > Configure System > SonarQube name
                     sh """
-                       npx sonar-scanner \
-                       -Dsonar.projectKey=devsecops-demo \
-                       -Dsonar.sources=. \
-                       -Dsonar.host.url=http://localhost:9000 \
-                       -Dsonar.login=$SONAR_TOKEN
+                        npx sonar-scanner \
+                        -Dsonar.projectKey=devsecops-demo \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=${SONAR_HOST_URL} \
+                        -Dsonar.login=${SONAR_TOKEN}
                     """
                 }
             }
@@ -73,10 +73,8 @@ pipeline {
 
     post {
         always {
-            node {
-                echo "🧹 Cleaning up Docker session..."
-                sh 'docker logout'
-            }
+            echo "🧹 Cleaning up Docker session..."
+            sh 'docker logout'
         }
     }
 }
