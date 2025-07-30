@@ -73,8 +73,9 @@ pipeline {
     }
 
     post {
-        always {
-            echo '🧹 Cleaning up Docker session...'
+    always {
+        node {
+            echo "🧹 Cleaning up Docker session..."
             sh 'docker logout'
         }
     }
