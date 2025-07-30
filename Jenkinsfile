@@ -27,7 +27,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('MySonar') { // This must match Jenkins > Configure System > SonarQube name
+                withSonarQubeEnv('MySonar') {
                     sh """
                         npx sonar-scanner \
                         -Dsonar.projectKey=devsecops-demo \
