@@ -2,39 +2,80 @@ pipeline {
     agent any
 
     environment {
-        GIT_REPO = 'https://github.com/prudhviraj310/devsecops-demo.git'  // 🔁 Change to your actual repo URL
-        IMAGE_NAME = 'my-devops-app'
+        SONAR_TOKEN = credentials('sqp_17cb931388a45e307ed0fa0a8af99744bee68665') // Jenkins credential ID for SonarQube token
+        SONAR_HOST_URL = 'http://localhost:9000'
+        DOCKERHUB_USER = 'prudhviraj310'
+        IMAGE_NAME = 'devsecops-demo'
+    }
+
+    tools {
+        nodejs 'nodejs' // This must match Jenkins Global Tool Config name
     }
 
     stages {
-        stage('Clone Repository') {
+        stage('Checkout Code') {
             steps {
-                git branch: 'main', url: "${GIT_REPO}"
+                git 'https://github.com/prudhviraj310/devsecops-demo.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('MySonar') { // This must match Jenkins > Configure System > SonarQube name
+                    sh """
+                       npx sonar-scanner \
+  -Dsonar.projectKey=devsecops-demo \
+  -Dsonar.sources=. \
+  -Dsonar.host.url=http://localhost:9000 \
+  -Dsonar.login=$SONAR_TOKEN
+
+                    """
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 1, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    sh "docker build -t ${IMAGE_NAME} ."
-                }
+                sh 'docker build -t $DOCKERHUB_USER/$IMAGE_NAME:latest .'
             }
         }
 
-        stage('Trivy Vulnerability Scan') {
+        stage('Trivy Scan') {
             steps {
-                script {
-                    sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image ${IMAGE_NAME}"
-                }
+                sh 'trivy image --exit-code 0 --severity HIGH,CRITICAL $DOCKERHUB_USER/$IMAGE_NAME:latest'
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Docker Login & Push') {
             steps {
-                script {
-                    sh "docker run -d -p 5173:5173 --name ${IMAGE_NAME} ${IMAGE_NAME}"
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push $DOCKERHUB_USER/$IMAGE_NAME:latest
+                    '''
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            echo '🧹 Cleaning up Docker session...'
+            sh 'docker logout'
         }
     }
 }

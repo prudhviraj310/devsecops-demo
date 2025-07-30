@@ -1,6 +1,3 @@
-node_modules
-dist
-.env
 global:
   scrape_interval: 15s
 
