@@ -2,11 +2,11 @@ pipeline {
   agent any
 
   tools {
-    nodejs 'NodeJS-20'  // Ensure NodeJS-20 is installed in Jenkins tools
+    nodejs 'NodeJS-20'  // Make sure this name exactly matches the NodeJS tool installed in Jenkins
   }
 
   environment {
-    SONAR_TOKEN = credentials('sonar-token')  // Add this credential in Jenkins
+    SONAR_TOKEN = credentials('sonar-token')  // This must match the ID of your SonarQube token in Jenkins credentials
   }
 
   stages {
@@ -24,8 +24,14 @@ pipeline {
 
     stage('SonarQube Analysis') {
       steps {
-        withSonarQubeEnv('MySonarQubeServer') {
-          sh 'npx sonar-scanner -Dsonar.projectKey=devsecops-demo -Dsonar.sources=src'
+        withSonarQubeEnv('MySonarQubeServer') {  // Ensure "MySonarQubeServer" is configured in Jenkins -> Manage Jenkins -> Configure System
+          sh '''
+            npx sonar-scanner \
+              -Dsonar.projectKey=devsecops-demo \
+              -Dsonar.sources=src \
+              -Dsonar.host.url=$SONAR_HOST_URL \
+              -Dsonar.login=$SONAR_TOKEN
+          '''
         }
       }
     }
