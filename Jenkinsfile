@@ -2,11 +2,11 @@ pipeline {
   agent any
 
   tools {
-    nodejs 'NodeJS-20'
+    nodejs 'NodeJS-20'  // Ensure NodeJS-20 is installed in Jenkins tools
   }
 
   environment {
-    SONAR_TOKEN = credentials('sonar-token')
+    SONAR_TOKEN = credentials('sonar-token')  // Add this credential in Jenkins
   }
 
   stages {
@@ -18,18 +18,14 @@ pipeline {
 
     stage('Install Dependencies') {
       steps {
-        dir('devsecops-demo-main') {
-          sh 'npm install'
-        }
+        sh 'npm install'
       }
     }
 
     stage('SonarQube Analysis') {
       steps {
-        dir('devsecops-demo-main') {
-          withSonarQubeEnv('MySonarQubeServer') {
-            sh 'npx sonar-scanner -Dsonar.projectKey=devsecops-demo -Dsonar.sources=src'
-          }
+        withSonarQubeEnv('MySonarQubeServer') {
+          sh 'npx sonar-scanner -Dsonar.projectKey=devsecops-demo -Dsonar.sources=src'
         }
       }
     }
@@ -44,9 +40,7 @@ pipeline {
 
     stage('Build Docker Image') {
       steps {
-        dir('devsecops-demo-main') {
-          sh 'docker build -t devsecops-demo .'
-        }
+        sh 'docker build -t devsecops-demo .'
       }
     }
 
