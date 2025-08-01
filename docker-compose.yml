@@ -2,7 +2,9 @@ version: "3.8"
 
 services:
   jenkins:
-    image: jenkins/jenkins:lts
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins
     container_name: jenkins
     user: root
     ports:
@@ -11,7 +13,7 @@ services:
     volumes:
       - ./jenkins_data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
-      - /usr/bin/docker:/usr/bin/docker # ✅ Let Jenkins run Docker CLI inside container
+      - /usr/bin/docker:/usr/bin/docker
     environment:
       - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
     restart: always
