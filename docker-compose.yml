@@ -9,8 +9,11 @@ services:
       - "8080:8080"
       - "50000:50000"
     volumes:
-      - ./jenkins_data:/var/jenkins_home # ✅ Persistent bind mount for Jenkins
+      - ./jenkins_data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker # ✅ Let Jenkins run Docker CLI inside container
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
     restart: always
 
   sonarqube:
@@ -20,9 +23,25 @@ services:
       - "9000:9000"
     environment:
       - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+      - SONAR_JDBC_USERNAME=sonar
+      - SONAR_JDBC_PASSWORD=sonar
+      - SONAR_JDBC_URL=jdbc:postgresql://db:5432/sonarqube
+    depends_on:
+      - db
     volumes:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_extensions:/opt/sonarqube/extensions
+    restart: always
+
+  db:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+      - POSTGRES_DB=sonarqube
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     restart: always
 
   prometheus:
@@ -50,15 +69,8 @@ services:
     command: ["--version"]
     restart: "no"
 
-  # Optional: ArgoCD for GitOps
-  # argocd:
-  #   image: argoproj/argocd
-  #   container_name: argocd
-  #   ports:
-  #     - "8081:8080"
-  #   restart: always
-
 volumes:
   sonarqube_data:
   sonarqube_extensions:
+  postgres_data:
   grafana_data:
