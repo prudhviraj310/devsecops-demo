@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   tools {
-    nodejs 'NodeJS-20'  // Make sure this name exactly matches the NodeJS tool installed in Jenkins
+    nodejs 'NodeJS-20'  // Make sure this matches the tool name in Jenkins > Global Tool Configuration
   }
 
   environment {
@@ -10,6 +10,7 @@ pipeline {
   }
 
   stages {
+
     stage('Checkout Code') {
       steps {
         git 'https://github.com/prudhviraj310/devsecops-demo.git'
@@ -24,14 +25,12 @@ pipeline {
 
     stage('SonarQube Analysis') {
       steps {
-        withSonarQubeEnv('MySonarQubeServer') {  // Ensure "MySonarQubeServer" is configured in Jenkins -> Manage Jenkins -> Configure System
-          sh '''
+        withSonarQubeEnv('MySonarQubeServer') {  // This must match the name configured under Manage Jenkins > Configure System
+          sh """
             npx sonar-scanner \
               -Dsonar.projectKey=devsecops-demo \
-              -Dsonar.sources=src \
-              -Dsonar.host.url=$SONAR_HOST_URL \
-              -Dsonar.login=$SONAR_TOKEN
-          '''
+              -Dsonar.sources=src
+          """
         }
       }
     }
@@ -59,11 +58,11 @@ pipeline {
     stage('Docker Login & Push') {
       steps {
         withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-          sh '''
+          sh """
             echo "$PASSWORD" | docker login -u "$USERNAME" --password-stdin
             docker tag devsecops-demo $USERNAME/devsecops-demo:latest
             docker push $USERNAME/devsecops-demo:latest
-          '''
+          """
         }
       }
     }
@@ -76,3 +75,4 @@ pipeline {
     }
   }
 }
+``
