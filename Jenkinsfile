@@ -2,11 +2,11 @@ pipeline {
   agent any
 
   tools {
-    nodejs 'NodeJS-20'  // Make sure this matches the tool name in Jenkins > Global Tool Configuration
+    nodejs 'NodeJS-20'  // Must match Jenkins tool name
   }
 
   environment {
-    SONAR_TOKEN = credentials('sonar-token')  // This must match the ID of your SonarQube token in Jenkins credentials
+    SONAR_TOKEN = credentials('sonar-token')  // Jenkins credentials ID
   }
 
   stages {
@@ -25,7 +25,7 @@ pipeline {
 
     stage('SonarQube Analysis') {
       steps {
-        withSonarQubeEnv('MySonarQubeServer') {  // This must match the name configured under Manage Jenkins > Configure System
+        withSonarQubeEnv('MySonarQubeServer') {
           sh """
             npx sonar-scanner \
               -Dsonar.projectKey=devsecops-demo \
@@ -49,9 +49,11 @@ pipeline {
       }
     }
 
-    stage('Trivy Scan') {
+    stage('Trivy Scan (Fail on HIGH/CRITICAL)') {
       steps {
-        sh 'trivy image devsecops-demo'
+        sh '''
+          trivy image --exit-code 1 --severity HIGH,CRITICAL devsecops-demo
+        '''
       }
     }
 
@@ -75,4 +77,3 @@ pipeline {
     }
   }
 }
-
