@@ -43,9 +43,19 @@ pipeline {
       }
     }
 
+    stage('Clean Docker Cache') {
+      steps {
+        echo "Cleaning Docker build cache..."
+        sh '''
+          docker builder prune -af || true
+          docker system prune -af --volumes || true
+        '''
+      }
+    }
+
     stage('Build Docker Image') {
       steps {
-        sh 'docker build -t devsecops-demo .'
+        sh 'docker build --no-cache -t devsecops-demo .'
       }
     }
 
